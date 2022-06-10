@@ -7,6 +7,8 @@
 ## Funções mínimas do makefile
 
 > Tem 2 funções essenciais pedidas nessa tarefa, o make que compila o código e gera o binário e o make clear para apagar o binário gerado.
+
+##Principais funções do código
 ```c
 void backing_store(){
     FILE *bin_file;
