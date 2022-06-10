@@ -19,7 +19,7 @@ int Lru_Array[256];
 
 int replace;
 int LRU, LRUtlb;
-int fifo = 0, fifoTLB = 1;    // FIFO
+int fifo = 0, fifoTLB = 0;    // FIFO
 int adresses, frame, page_number, offset;
 int index_memoria = 0, index_TLB = 0; // Variaveis contadoras globais
 int in_TLB = 0, validate = 0;    //Variaveis de validacao
