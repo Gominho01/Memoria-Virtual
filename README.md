@@ -2,7 +2,7 @@
 
 ## Proposito do código
 
->O codigo tem como objetivo implementar o problema do produto consumidor usando threads
+>O codigo tem como objetivo implementar um gerenciador de memoria virtual
 
 ## Funções mínimas do makefile
 
