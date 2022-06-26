@@ -29,15 +29,10 @@ void backing_store(){
 > Pega o valor do backing_store e coloca no buffer
 ```c
 void update(char buffer[]){    
-    if (fifo == 1 || tamanho < 128){ // FIFO
-        
+    if (LRU == 1 && index_memoria >= 128){
+        index_memoria = Lru_mem();
     }
-    else{ // LRU
-        int value = remove_last(head);
-        printf("a");
-        
-    }
-    
+
     for (int k = 0; k < 256; k++)
             Phy_Memory[index_memoria][k] = buffer[k]; // adiciona as informacoes na memoria
     for (int i = 0; i < 256; i++){
@@ -45,7 +40,6 @@ void update(char buffer[]){
             Page_table[i][1] = 0;
         }
     }
-    push(&head, index_memoria);
     Page_table[page_number][0] = index_memoria;
     Page_table[page_number][1] = 1; 
     
@@ -53,16 +47,74 @@ void update(char buffer[]){
 ```
 > Atualiza a page_table e pega as informações que ele armazenou no buffer e coloca na memoria fisica
 ```c
-void updateTLB(){
-    TLB[index_TLB][0] = page_number;
-    TLB[index_TLB][1] = index_memoria;
-    index_TLB++;
-    if (index_TLB == 16 & fifoTLB == 1){
-        index_TLB = 0;
+void updateTlbLRU(){
+    Lru_TLB();
+    TLB[index_maior][0] = page_number;
+    TLB[index_maior][1] = frame;  
+}
+```
+> Atualiza a TLB como LRU
+
+```c
+int Lru_TLB(){
+    maior = -1;
+    index_maior = 0;
+    for(int i = 0; i < 16; i++) {
+        if (Lru_tlb_Array[i][1] > maior) { // pega o maior(mais antigo)
+            maior = Lru_tlb_Array[i][1]; 
+            index_maior = i;
+        }
+    }
+    
+    return index_maior;
+}
+```
+> Procura o maior numero no array da TLB e retrona o maior
+
+```c
+void updateLRU(){
+     for (int i = 0; i < 16; i++){
+        Lru_tlb_Array[i][0] = TLB[i][1];
+        if (TLB[i][1] == frame){
+            Lru_tlb_Array[i][1] = 0;
+        }
+        else if(Lru_tlb_Array[i][0] != 2048){
+            Lru_tlb_Array[i][1]++;
+        }
     }
 }
 ```
-> Atualiza a TLB
+> Reseta o valor do frame encontrado na TLB e soma 1 no resto
+
+```c
+int Lru_mem(){
+    maior = 0;
+    int index_maior = 0;
+    for(int i = 0; i < 128; i++) { // caso esteja cheio ele procura
+        if (maior < Lru_Array[i]) { // pega o maior(mais antigo)
+            maior = Lru_Array[i]; 
+            index_maior = i;
+        }
+    }
+    
+    return index_maior;
+}
+```
+> Procura o maior valor no array da memoria fisica
+
+```c
+void updateTlbFIFO(){
+
+    if (index_TLB == 16 & fifoTLB == 1)
+        index_TLB = 0;
+        
+    TLB[index_TLB][0] = page_number;
+    TLB[index_TLB][1] = index_memoria;
+    index_TLB++;
+}
+```
+> Atualiza a TLB como FIFO
+
 ```c
 void inTLB(int i){ 
     if (TLB[i][0] == page_number){ //Ta na TLB
@@ -74,98 +126,3 @@ void inTLB(int i){
 }
 ```
 > Checa se o page number está na TLB
-
-## FUNÇÕES DA LISTA ENCADEADA
-
-```c
-void delete(int pos)
-{
-    struct node *temp = head;       
-    int i;                    
-    if(pos==0)
-    {
-        head=head->next;        
-        temp->next=NULL;
-        free(temp);       
-    }
-    else
-    {
-        for(i=0;i<pos-1;i++)
-        {
-            temp=temp->next;
-        }
-        struct node *del =temp->next;       
-        temp->next=temp->next->next;  
-        del->next=NULL;
-        free(del);                         
-    }
-    return ;
-}
- ```
- > Deleta valor especifico da lista
- ```c
-void push(struct node ** head, int val) {
-    
-    if (search(*head, val) == 0 && tamanho > 127){
-        remove_last(*head);
-    }
-        
-    struct node * new_node;
-    new_node = (struct node *) malloc(sizeof(struct node));
-
-    new_node->data = val;
-    new_node->next = *head;
-    *head = new_node;
-    tamanho++;
-}
- ```
- > Adiciona valor na primeira posição da lista e empurra o resto
- ```c
-void print_list(struct node * head) {
-    struct node * current = head;
-
-    while (current != NULL) {
-        printf("%d\n", current->data);
-        current = current->next;
-    }
-}
-```
-> Printa a lista
-```c
-int search(struct node* head, int x)
-{
-    struct node* current = head;  
-    int index = 0;
-    while (current != NULL)
-    {
-        if (current->data == x){
-            delete(index);
-            return 1;
-        }
-        current = current->next;
-        index++;
-    }
-    return 0;
-}
-```
-> Procura por um elemento especifico da lista e chama a função delete se achar
-```c
-int remove_last(struct node * head) {
-    int retval = 0;
-    if (head->next == NULL) {
-        retval = head->data;
-        free(head);
-        return retval;
-    }
-    struct node * current = head;
-    while (current->next->next != NULL) {
-        current = current->next;
-    }
-    retval = current->next->data;
-    free(current->next);
-    current->next = NULL;
-    return retval; //frame do removido
-
-}
-```
-> Remove o ultimo elemento da lista encadeada
